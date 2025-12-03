@@ -7,19 +7,31 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Define color variables for easy dynamic styling */
+        :root {
+            --color-primary: #1e40af; /* Deep Blue (Default) */
+            --color-secondary: #f97316; /* Burnt Orange (Default) */
+            --color-background: #fef3c7; /* Amber/Beige */
+            --color-text: #6e4e2c; /* Dark Amber/Brown */
+        }
+        
+        body {
+            background-color: var(--color-background);
+        }
+        
         /* Custom Scrollbar for cleaner look */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #fef3c7; /* Amber-100 (Beige base) */
+            background: var(--color-background); 
         }
         ::-webkit-scrollbar-thumb {
-            background: #f97316; /* Burnt Orange */
+            background: var(--color-secondary); 
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #ea580c; /* Darker Burnt Orange */
+            background: #ea580c; /* Darker secondary */
         }
 
         /* Chart Container Specifics as per requirements */
@@ -44,10 +56,10 @@
             transition: all 0.3s ease-in-out;
         }
 
-        /* Checkbox custom style (Burnt Orange on checked) */
+        /* Checkbox custom style (Uses Secondary color on checked) */
         .custom-checkbox:checked + div {
-            background-color: #ea580c; /* orange-600 */
-            border-color: #ea580c;
+            background-color: var(--color-secondary); 
+            border-color: var(--color-secondary);
         }
         .custom-checkbox:checked + div:after {
             content: '✓';
@@ -85,13 +97,13 @@
             <div class="flex items-center justify-center mb-4">
                 <!-- Custom Executive Weightlifting Logo (Inline SVG) -->
                 <svg width="40" height="40" viewBox="0 0 100 100" class="mr-3">
-                    <rect x="10" y="45" width="80" height="10" rx="2" fill="#1e40af"/> <!-- Barbell bar (Blue) -->
-                    <rect x="0" y="30" width="10" height="40" rx="3" fill="#ea580c"/> <!-- Left Plate (Orange) -->
-                    <rect x="90" y="30" width="10" height="40" rx="3" fill="#ea580c"/> <!-- Right Plate (Orange) -->
-                    <path d="M50 30 L60 20 L40 20 Z" fill="#1e40af"/> <!-- Upward Arrow Tip (Blue) -->
-                    <path d="M50 20 L50 40" stroke="#1e40af" stroke-width="5" stroke-linecap="round"/> <!-- Upward Arrow Stem (Blue) -->
+                    <rect x="10" y="45" width="80" height="10" rx="2" fill="var(--color-primary)"/> <!-- Barbell bar (Blue) -->
+                    <rect x="0" y="30" width="10" height="40" rx="3" fill="var(--color-secondary)"/> <!-- Left Plate (Orange) -->
+                    <rect x="90" y="30" width="10" height="40" rx="3" fill="var(--color-secondary)"/> <!-- Right Plate (Orange) -->
+                    <path d="M50 30 L60 20 L40 20 Z" fill="var(--color-primary)"/> <!-- Upward Arrow Tip (Blue) -->
+                    <path d="M50 20 L50 40" stroke="var(--color-primary)" stroke-width="5" stroke-linecap="round"/> <!-- Upward Arrow Stem (Blue) -->
                 </svg>
-                <h1 class="text-3xl md:text-4xl font-extrabold text-blue-800 tracking-tight">Workout Tracker</h1>
+                <h1 id="app-title" class="text-3xl md:text-4xl font-extrabold text-blue-800 tracking-tight">Executive Lift</h1>
             </div>
             <p class="text-amber-700 max-w-2xl mx-auto">
                 Interactive tracking for your customized split. Select a day to view the plan and track your sets.
@@ -99,17 +111,15 @@
         </header>
 
         <!-- Navigation / Day Selector -->
-        <div class="flex justify-center space-x-4 mb-8">
-            <button id="btn-day1" onclick="switchDay(1)" class="transition-all-300 px-6 py-3 rounded-xl font-semibold shadow-md text-white bg-blue-800 hover:bg-blue-700 ring-2 ring-blue-800 ring-offset-2 ring-offset-amber-50">
-                Full Body 1
-            </button>
-            <button id="btn-day2" onclick="switchDay(2)" class="transition-all-300 px-6 py-3 rounded-xl font-semibold shadow-md text-blue-800 bg-amber-100 hover:bg-amber-200 border border-blue-200">
-                Full Body 2
-            </button>
+        <div id="day-selector" class="flex justify-center space-x-4 mb-8">
+            <!-- Buttons dynamically injected here -->
         </div>
 
         <!-- Workout Tracker Section -->
         <div id="workout-container" class="space-y-6">
+            <div id="loading-message" class="text-center text-blue-800 font-semibold p-10 hidden">
+                Loading workout plan...
+            </div>
             <!-- Content injected via JS -->
         </div>
 
@@ -174,9 +184,9 @@
     <script>
         // --- Muscle Color Mapping (For Cards & Charts) ---
         const muscleColorMap = {
-            "Chest": { tag: "bg-orange-100 text-orange-900", hex: "#f97316" }, // Burnt Orange
-            "Back": { tag: "bg-blue-200 text-blue-900", hex: "#1e40af" }, // Deep Blue (Long Beach Blue)
-            "Hamstrings": { tag: "bg-amber-200 text-amber-900", hex: "#f59e0b" }, // Amber/Beige
+            "Chest": { tag: "bg-orange-100 text-orange-900", hex: "#f97316" }, 
+            "Back": { tag: "bg-blue-200 text-blue-900", hex: "#1e40af" }, 
+            "Hamstrings": { tag: "bg-amber-200 text-amber-900", hex: "#f59e0b" }, 
             "Quads/Glutes": { tag: "bg-red-200 text-red-900", hex: "#ef4444" }, 
             "Shoulders": { tag: "bg-purple-200 text-purple-900", hex: "#a855f7" },
             "Core": { tag: "bg-cyan-200 text-cyan-900", hex: "#06b6d4" },
@@ -191,38 +201,168 @@
             return muscleColorMap[muscle]?.hex || "#9ca3af";
         }
         
-        // --- Data Source ---
-        const workoutData = {
-            1: {
-                title: "Full Body 1",
-                description: "Focus on fundamental compounds with a mix of push, pull, and legs, designed for strength and mass.",
-                exercises: [
-                    { id: "fb1_1", name: "Incline Dumbbell Press", muscle: "Chest", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Machine Chest Press"], notes: "Control the descent." },
-                    { id: "fb1_2", name: "Lat Pull Downs", muscle: "Back", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Pull-Ups"], notes: "Focus on driving elbows down." },
-                    // RDL Warmup updated to 1
-                    { id: "fb1_3", name: "RDL (Romanian Deadlifts)", muscle: "Hamstrings", warmups: 1, sets: 3, reps: "6 - 10", targetRep: 8, sub: ["Lying Hamstring Curls"], notes: "Hinge at the hips, keep back flat." }, 
-                    { id: "fb1_4", name: "Box Step Ups (per leg)", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "10 - 15", targetRep: 12, sub: ["Walking Lunges"], notes: "Drive through the heel." },
-                    { id: "fb1_5", name: "Dumbbell Side Raises", muscle: "Shoulders", warmups: 1, sets: 3, reps: "10 - 15", targetRep: 12, sub: ["Cable Side Raises"], notes: "Lead with elbows." },
-                    { id: "fb1_6", name: "Cable Crunches", muscle: "Core", warmups: 0, sets: 3, reps: "15 - 20", targetRep: 17, sub: [], notes: "Keep hips stationary." }
-                ]
+        // --- SCALABLE DATA SOURCE ---
+        const programData = {
+            "default": { // <-- YOUR CUSTOM PLAN FROM THE CONVERSATION HISTORY
+                title: "Full Body Workout 2x (Custom)",
+                colorPrimary: '#1e40af', // Blue
+                colorSecondary: '#f97316', // Orange
+                workouts: {
+                    1: {
+                        title: "Full Body 1",
+                        description: "Focus on fundamental compounds with a mix of push, pull, and legs, designed for strength and mass.",
+                        exercises: [
+                            { id: "fb1_1", name: "Incline Dumbbell Press", muscle: "Chest", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Machine Chest Press"] },
+                            { id: "fb1_2", name: "Lat Pull Downs", muscle: "Back", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Pull-Ups"] },
+                            { id: "fb1_3", name: "RDL (Romanian Deadlifts)", muscle: "Hamstrings", warmups: 1, sets: 3, reps: "6 - 10", targetRep: 8, sub: ["Lying Hamstring Curls"] }, 
+                            { id: "fb1_4", name: "Box Step Ups (per leg)", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "10 - 15", targetRep: 12, sub: ["Walking Lunges"] },
+                            { id: "fb1_5", name: "Dumbbell Side Raises", muscle: "Shoulders", warmups: 1, sets: 3, reps: "10 - 15", targetRep: 12, sub: ["Cable Side Raises"] },
+                            { id: "fb1_6", name: "Cable Crunches", muscle: "Core", warmups: 0, sets: 3, reps: "15 - 20", targetRep: 17, sub: [] }
+                        ]
+                    },
+                    2: {
+                        title: "Full Body 2",
+                        description: "Secondary full body session with varied accessory work, focusing on volume and arm isolation.",
+                        exercises: [
+                            { id: "fb2_1", name: "Leg Press", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Smith Machine Squats"] },
+                            { id: "fb2_2", name: "Seated Cable Rows", muscle: "Back", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Chest Supported DB Row"] },
+                            { id: "fb2_3", name: "Incline DB Shoulder Press", muscle: "Shoulders", warmups: 1, sets: 3, reps: "8 - 10", targetRep: 9, sub: ["Seated DB Shoulder Press"] },
+                            { id: "fb2_4", name: "Lying Hamstring Curl", muscle: "Hamstrings", warmups: "1-2", sets: 3, reps: "8 - 12", targetRep: 10, sub: ["DB RDL"] },
+                            { id: "fb2_5", name: "Tricep Push Downs", muscle: "Triceps", warmups: 1, sets: 2, reps: "10 - 15", targetRep: 12, sub: ["Overhead Tricep Extension"] },
+                            { id: "fb2_6", name: "Lying Bicep Curls (DB)", muscle: "Biceps", warmups: 1, sets: 2, reps: "10 - 15", targetRep: 12, sub: ["Preacher Curls"] },
+                            { id: "fb2_7", name: "Leg Lifts", muscle: "Core", warmups: 0, sets: 3, reps: "15 - 20", targetRep: 17, sub: [] }
+                        ]
+                    }
+                }
             },
-            2: {
-                title: "Full Body 2",
-                description: "Secondary full body session with varied accessory work, focusing on volume and arm isolation.",
-                exercises: [
-                    { id: "fb2_1", name: "Leg Press", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Smith Machine Squats"], notes: "Full range of motion without locking knees." },
-                    { id: "fb2_2", name: "Seated Cable Rows", muscle: "Back", warmups: 1, sets: 3, reps: "8 - 12", targetRep: 10, sub: ["Chest Supported DB Row"], notes: "Squeeze shoulder blades together." },
-                    { id: "fb2_3", name: "Incline DB Shoulder Press", muscle: "Shoulders", warmups: 1, sets: 3, reps: "8 - 10", targetRep: 9, sub: ["Seated DB Shoulder Press"], notes: "Brace core tight." },
-                    { id: "fb2_4", name: "Lying Hamstring Curl", muscle: "Hamstrings", warmups: "1-2", sets: 3, reps: "8 - 12", targetRep: 10, sub: ["DB RDL"], notes: "Control the eccentric phase." },
-                    { id: "fb2_5", name: "Tricep Push Downs", muscle: "Triceps", warmups: 1, sets: 2, reps: "10 - 15", targetRep: 12, sub: ["Overhead Tricep Extension"], notes: "Keep elbows pinned to sides." },
-                    { id: "fb2_6", name: "Lying Bicep Curls (DB)", muscle: "Biceps", warmups: 1, sets: 2, reps: "10 - 15", targetRep: 12, sub: ["Preacher Curls"], notes: "Full extension at bottom." },
-                    { id: "fb2_7", name: "Leg Lifts", muscle: "Core", warmups: 0, sets: 3, reps: "15 - 20", targetRep: 17, sub: [], notes: "Control the legs on the way down." }
-                ]
+            // --- LEGACY PROGRAM: SHAMA FULL BODY 1 (From the uploaded file) ---
+            "shama_fb1": {
+                title: "Shama's Full Body 1 (Legacy)",
+                colorPrimary: '#10b981', // Emerald Green
+                colorSecondary: '#a855f7', // Purple
+                workouts: {
+                    1: {
+                        title: "Full Body A",
+                        description: "Original Full Body 1 plan focusing on lower body and upper accessories.",
+                        exercises: [
+                            { id: "sfb1_1", name: "Smith Machine Squats", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "5 - 8", targetRep: 7, sub: ["Leg Press"] },
+                            { id: "sfb1_2", name: "Seated DB Shoulder Press", muscle: "Shoulders", warmups: 1, sets: 3, reps: "10", targetRep: 10, sub: ["Standing DB Shoulder Press"] },
+                            { id: "sfb1_3", name: "Lying Hamstring Curl", muscle: "Hamstrings", warmups: "1-2", sets: 3, reps: "8 - 10", targetRep: 9, sub: ["DB RDL", "Seated Hamstring Curls"] },
+                            { id: "sfb1_4", name: "Lying DB Curls", muscle: "Biceps", warmups: 1, sets: 3, reps: "10 - 12", targetRep: 11, sub: ["Preacher Curls"] },
+                            { id: "sfb1_5", name: "DB Side Raises", muscle: "Shoulders", warmups: 1, sets: 3, reps: "10 - 12", targetRep: 11, sub: [] },
+                            { id: "sfb1_6", name: "Cable Crunches", muscle: "Core", warmups: 0, sets: 3, reps: "15", targetRep: 15, sub: [] }
+                        ]
+                    }
+                }
+            },
+            // --- LEGACY PROGRAM: SHAMA FULL BODY 2 (From the uploaded file) ---
+            "shama_fb2": {
+                title: "Shama's Full Body 2 (Legacy)",
+                colorPrimary: '#06b6d4', // Teal/Cyan
+                colorSecondary: '#ef4444', // Red
+                workouts: {
+                    1: {
+                        title: "Full Body B",
+                        description: "Original Full Body 2 plan focusing on chest, back, and functional legs.",
+                        exercises: [
+                            { id: "sfb2_1", name: "Incline DB Press", muscle: "Chest", warmups: 1, sets: 3, reps: "10 - 12", targetRep: 11, sub: ["Machine Chest Press", "Bench Press"] },
+                            { id: "sfb2_2", name: "Pullups / Lat Pulldowns", muscle: "Back", warmups: 1, sets: 3, reps: "6 - 8", targetRep: 7, sub: ["Lat Pulldowns"] },
+                            { id: "sfb2_3", name: "Overhead Tricep Extensions (Bar)", muscle: "Triceps", warmups: 1, sets: 3, reps: "8", targetRep: 8, sub: ["Overhead Tricep Extension Rope"] },
+                            { id: "sfb2_4", name: "DB Lateral Raises", muscle: "Shoulders", warmups: 0, sets: 3, reps: "10 - 15", targetRep: 12, sub: ["Cable Side Raises"] },
+                            { id: "sfb2_5", name: "Walking Lunges", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "20 steps", targetRep: 20, sub: ["Step Ups"] },
+                            { id: "sfb2_6", name: "Leg Lifts", muscle: "Core", warmups: 0, sets: 3, reps: "15", targetRep: 15, sub: [] }
+                        ]
+                    }
+                }
+            },
+            // --- NEW PROGRAM: UPPER LOWER 2X (From the PDF upload) ---
+            "upper_lower_2x": { 
+                title: "Upper/Lower 2x Split",
+                colorPrimary: '#880E4F', // Maroon
+                colorSecondary: '#BDBDBD', // Light Gray
+                workouts: {
+                    1: {
+                        title: "Upper Body 1",
+                        description: "Heavy compound session focusing on vertical push/pull, chest isolation, and arms.",
+                        exercises: [
+                            { id: "ul1_1", name: "DB Lateral Raises", muscle: "Shoulders", warmups: 1, sets: 3, reps: "10-12", targetRep: 12, sub: ["Single Arm Cable side raises"] },
+                            { id: "ul1_2", name: "Neutral Grip Pullups", muscle: "Back", warmups: 1, sets: 3, reps: "10", targetRep: 10, sub: ["Lat Pulldowns"] },
+                            { id: "ul1_3", name: "Cable Flyes", muscle: "Chest", warmups: "1-2", sets: 3, reps: "8-10", targetRep: 9, sub: ["Incline Db Press", "Chest machine press"] },
+                            { id: "ul1_4", name: "Seated DB Press", muscle: "Shoulders", warmups: 1, sets: 3, reps: "10-12", targetRep: 12, sub: ["Machine shoulder press"] },
+                            { id: "ul1_5", name: "Overhead Tricep Extension", muscle: "Triceps", warmups: 1, sets: 3, reps: "12", targetRep: 12, sub: ["Bar variation"] },
+                        ]
+                    },
+                    2: {
+                        title: "Lower Body 1",
+                        description: "Hamstring and quad focused session with calf and core accessory work.",
+                        exercises: [
+                            { id: "ul2_1", name: "RDL", muscle: "Hamstrings", warmups: 1, sets: 3, reps: "4-8", targetRep: 6, sub: ["Lying Hamstring Curls", "Nordic Hamstring Curls"] },
+                            { id: "ul2_2", name: "Walking Lunges (per leg)", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "6-10", targetRep: 8, sub: ["Machine hip abductions"] },
+                            { id: "ul2_3", name: "Leg Extensions", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "10-12", targetRep: 12, sub: ["Sissy Squats", "DB Step Ups"] },
+                            { id: "ul2_4", name: "Single Leg Calf Raises", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "12-15", targetRep: 15, sub: ["Machine Calf Press", "Seated Machine Calf Raises"] },
+                            { id: "ul2_5", name: "Cable Crunches", muscle: "Core", warmups: 0, sets: 3, reps: "15-20", targetRep: 17, sub: ["Leg Raises"] },
+                        ]
+                    },
+                    3: {
+                        title: "Upper Body 2",
+                        description: "Horizontal push/pull density session with dedicated arm isolation.",
+                        exercises: [
+                            { id: "ul3_1", name: "Incline DB Press", muscle: "Chest", warmups: 1, sets: 3, reps: "10-12", targetRep: 12, sub: ["Bench Press"] },
+                            { id: "ul3_2", name: "Chest supported rows (mid back)", muscle: "Back", warmups: 1, sets: 3, reps: "8-12", targetRep: 10, sub: ["DB chest supported rows"] },
+                            { id: "ul3_3", name: "Seated Cable Rows", muscle: "Back", warmups: 1, sets: 3, reps: "8", targetRep: 8, sub: ["bent over barbell rows"] },
+                            { id: "ul3_4", name: "Single arm crossbody row", muscle: "Back", warmups: 1, sets: 2, reps: "12-15", targetRep: 15, sub: ["DB rows"] },
+                            { id: "ul3_5", name: "Tricep pressdowns (rope)", muscle: "Triceps", warmups: 1, sets: 2, reps: "12", targetRep: 12, sub: ["Tricep pressdown bar"] },
+                            { id: "ul3_6", name: "Bayesian cable curls", muscle: "Biceps", warmups: 1, sets: 2, reps: "12", targetRep: 12, sub: ["Incline db curls"] },
+                        ]
+                    },
+                    4: {
+                        title: "Lower Body 2",
+                        description: "Primary squatting and deadlift accessory day.",
+                        exercises: [
+                            { id: "ul4_1", name: "Barbell Squats", muscle: "Quads/Glutes", warmups: 2, sets: 3, reps: "4-8", targetRep: 6, sub: ["Machine Leg Press", "Smith Machine Squats"] },
+                            { id: "ul4_2", name: "Bulgarian Split Squats DB RDL", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "6-12", targetRep: 9, sub: ["Walking Lunges"] },
+                            { id: "ul4_3", name: "DB RDL", muscle: "Hamstrings", warmups: 1, sets: 3, reps: "10-12", targetRep: 12, sub: ["Barbell RDL", "Seated Hamstring curls"] },
+                            { id: "ul4_4", name: "Single Leg Calf Raises", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "12-15", targetRep: 15, sub: ["Machine Calf Press", "Seated Machine Calf Raises"] },
+                            { id: "ul4_5", name: "Cable Kickbacks", muscle: "Quads/Glutes", warmups: 1, sets: 3, reps: "12-15", targetRep: 15, sub: ["Hip abduction machine"] },
+                            { id: "ul4_6", name: "Cable Crunches", muscle: "Core", warmups: 0, sets: 3, reps: "15-20", targetRep: 17, sub: ["Leg Raises"] },
+                        ]
+                    }
+                }
+            },
+            // --- EXISTING PROGRAM TEMPLATE ---
+            "client_max_A": {
+                title: "Client Max Strength A",
+                colorPrimary: '#546E7A', // Gray Blue
+                colorSecondary: '#FFAB00', // Yellow/Gold
+                workouts: {
+                    1: {
+                        title: "Upper A (Heavy)",
+                        description: "Primary strength session focused on low-rep compound movements.",
+                        exercises: [
+                            { id: "cma1_1", name: "Bench Press", muscle: "Chest", warmups: 3, sets: 3, reps: "5", targetRep: 5, sub: ["DB Press"] },
+                            { id: "cma1_2", name: "Barbell Row", muscle: "Back", warmups: 3, sets: 3, reps: "5", targetRep: 5, sub: ["Pendlay Row"] },
+                            { id: "cma1_3", name: "Overhead Press", muscle: "Shoulders", warmups: 2, sets: 4, reps: "8", targetRep: 8, sub: ["Seated DB Press"] },
+                            { id: "cma1_4", name: "Weighted Dips", muscle: "Triceps", warmups: 1, sets: 3, reps: "10", targetRep: 10, sub: ["Close Grip Bench"] },
+                        ]
+                    },
+                    2: {
+                        title: "Lower B (Volume)",
+                        description: "High-volume lower body work with a focus on hypertrophy.",
+                        exercises: [
+                            { id: "cma2_1", name: "High-Bar Squat", muscle: "Quads/Glutes", warmups: 2, sets: 4, reps: "12", targetRep: 12, sub: ["Leg Press"] },
+                            { id: "cma2_2", name: "Stiff-Legged Deadlift", muscle: "Hamstrings", warmups: 1, sets: 3, reps: "10", targetRep: 10, sub: ["Lying Hamstring Curl"] },
+                            { id: "cma2_3", name: "Calf Raises", muscle: "Quads/Glutes", warmups: 1, sets: 5, reps: "15", targetRep: 15, sub: [] },
+                        ]
+                    }
+                }
             }
         };
 
         // --- State Management ---
+        let currentProgramId = "default";
         let currentDayId = 1;
+        
+        // Load persistent state using session storage (client-side isolation)
         const savedCompletion = sessionStorage.getItem('completionState');
         let completionState = savedCompletion ? JSON.parse(savedCompletion) : {}; 
 
@@ -232,34 +372,90 @@
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            const initialDay = sessionStorage.getItem('currentDayId') || 1;
+            // 1. Get Program ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const programId = urlParams.get('program') || 'default';
+            
+            if (!programData[programId]) {
+                 document.getElementById('loading-message').innerText = `Error: Program ID "${programId}" not found. Loading default plan.`;
+                 currentProgramId = 'default';
+            } else {
+                 currentProgramId = programId;
+                 document.getElementById('loading-message').classList.add('hidden');
+            }
+
+            // 2. Apply Program Theme and Title
+            applyProgramTheme(programData[currentProgramId]);
+
+            // 3. Render Day Selectors and initial day
+            renderDaySelectors(programData[currentProgramId].workouts);
+            
+            const initialDay = sessionStorage.getItem(`currentDayId_${currentProgramId}`) || Object.keys(programData[currentProgramId].workouts)[0];
             switchDay(parseInt(initialDay));
         });
 
-        // --- Core Functions ---
+        // --- New Scaling Functions ---
+
+        function applyProgramTheme(program) {
+            document.getElementById('app-title').innerText = program.title;
+
+            // Apply custom colors to CSS variables
+            document.documentElement.style.setProperty('--color-primary', program.colorPrimary);
+            document.documentElement.style.setProperty('--color-secondary', program.colorSecondary);
+        }
+
+        function renderDaySelectors(workouts) {
+            const container = document.getElementById('day-selector');
+            container.innerHTML = '';
+            
+            Object.keys(workouts).forEach(dayId => {
+                const day = workouts[dayId];
+                const button = document.createElement('button');
+                button.id = `btn-day${dayId}`;
+                button.onclick = () => switchDay(parseInt(dayId));
+                button.className = "transition-all-300 px-6 py-3 rounded-xl font-semibold shadow-md text-white bg-blue-800 hover:bg-blue-700 ring-2 ring-blue-800 ring-offset-2 ring-offset-amber-50"; // Base class for styling
+                button.innerText = day.title;
+                container.appendChild(button);
+            });
+        }
+
+        // --- Core Functions (Adjusted for multi-program access) ---
 
         // Epley Formula for Estimated 1RM
         function calculateE1RM(weight, reps) {
             if (weight <= 0 || reps <= 0 || reps > 30) return 0;
-            // e1RM = Weight * (1 + (Reps / 30))
             return Math.round(weight * (1 + (reps / 30)));
         }
 
         function switchDay(dayId) {
             currentDayId = dayId;
-            sessionStorage.setItem('currentDayId', dayId);
+            sessionStorage.setItem(`currentDayId_${currentProgramId}`, dayId);
             
-            // Update Buttons
-            const btn1 = document.getElementById('btn-day1');
-            const btn2 = document.getElementById('btn-day2');
-            
-            const activeClass = "transition-all-300 px-6 py-3 rounded-xl font-semibold shadow-md text-white bg-blue-800 hover:bg-blue-700 ring-2 ring-blue-800 ring-offset-2 ring-offset-amber-50";
-            const inactiveClass = "transition-all-300 px-6 py-3 rounded-xl font-semibold shadow-md text-blue-800 bg-amber-100 hover:bg-amber-200 border border-blue-200";
-            
-            btn1.className = dayId === 1 ? activeClass : inactiveClass;
-            btn2.className = dayId === 2 ? activeClass : inactiveClass;
+            const currentProgram = programData[currentProgramId];
+
+            // Update Buttons (use DOM manipulation to apply dynamic colors)
+            const dayKeys = Object.keys(currentProgram.workouts);
+            dayKeys.forEach(key => {
+                const btn = document.getElementById(`btn-day${key}`);
+                if (btn) {
+                    if (parseInt(key) === dayId) {
+                        // Active: Primary Color
+                        btn.style.backgroundColor = currentProgram.colorPrimary;
+                        btn.style.color = 'white';
+                        btn.style.borderColor = currentProgram.colorPrimary;
+                        btn.classList.add('ring-2', 'ring-offset-2');
+                    } else {
+                        // Inactive: Beige background, Primary text
+                        btn.style.backgroundColor = 'var(--color-background)'; 
+                        btn.style.color = currentProgram.colorPrimary;
+                        btn.style.borderColor = currentProgram.colorPrimary;
+                        btn.classList.remove('ring-2', 'ring-offset-2');
+                    }
+                }
+            });
             
             // Clear completion state (optional, keeps tracking clean per session)
+            // Note: Data is still isolated per program/day combination via state object
             completionState = {}; 
             sessionStorage.removeItem('completionState'); 
             
@@ -267,13 +463,14 @@
         }
 
         function renderWorkout(dayId) {
-            const data = workoutData[dayId];
+            const data = programData[currentProgramId].workouts[dayId];
             const container = document.getElementById('workout-container');
             container.innerHTML = '';
 
             // Intro Block for Section
             const introDiv = document.createElement('div');
             introDiv.className = "bg-blue-100 border-l-4 border-blue-500 p-4 rounded-r-xl mb-6 shadow-sm";
+            introDiv.style.borderColor = programData[currentProgramId].colorPrimary;
             introDiv.innerHTML = `
                 <h3 class="font-bold text-blue-900 text-lg">Day ${dayId}: ${data.title}</h3>
                 <p class="text-blue-800 text-sm">${data.description}</p>
@@ -288,7 +485,12 @@
                 
                 const card = document.createElement('div');
                 const cardBaseClass = "bg-white rounded-xl shadow-lg border-2 overflow-hidden transition-all hover:shadow-xl";
-                const cardActiveClass = isCompleted ? "border-orange-600 ring-2 ring-orange-600" : "border-blue-200 hover:border-blue-400";
+                
+                // Use dynamic primary/secondary colors for borders
+                const activeColor = programData[currentProgramId].colorSecondary; 
+                const inactiveColor = programData[currentProgramId].colorPrimary.substring(0, 5) + '20'; // Lightened primary for inactive
+
+                const cardActiveClass = isCompleted ? `border-orange-600 ring-2 ring-orange-600` : `border-blue-200 hover:border-blue-400`;
 
                 card.className = `${cardBaseClass} ${cardActiveClass}`;
                 
@@ -372,7 +574,7 @@
             const weightInput = document.getElementById(`weight-${id}`);
             const repsInput = document.getElementById(`reps-actual-${id}`);
             
-            const weight = parseInt(weightInput.value) || 0;
+            const weight = parseFloat(weightInput.value) || 0;
             const reps = parseInt(repsInput.value) || 0;
             
             const currentState = completionState[id] || { completed: false, weight: 0, reps: 0 };
@@ -385,13 +587,11 @@
             
             sessionStorage.setItem('completionState', JSON.stringify(completionState));
             
-            // Re-render charts immediately on data input change
-            updateCharts(workoutData[currentDayId]);
+            updateCharts(programData[currentProgramId].workouts[currentDayId]);
         }
 
 
         function toggleComplete(id, checkbox) {
-            // Ensure performance data is captured before marking complete
             updatePerformance(id);
 
             const currentState = completionState[id] || { completed: false, weight: 0, reps: 0 };
@@ -424,7 +624,7 @@
         }
 
         function updateProgress() {
-            const currentExercises = workoutData[currentDayId].exercises;
+            const currentExercises = programData[currentProgramId].workouts[currentDayId].exercises;
             const total = currentExercises.length;
             const completed = currentExercises.filter(ex => completionState[ex.id] && completionState[ex.id].completed).length;
             const percentage = Math.round((completed / total) * 100);
@@ -436,13 +636,13 @@
         // --- Chart Logic ---
 
         function updateCharts(data) {
-            // Prepare Data
             const exercises = data.exercises;
-            
+            const chartPrimaryColor = programData[currentProgramId].colorPrimary;
+            const chartSecondaryColor = programData[currentProgramId].colorSecondary;
+
             // --- Chart 1: Estimated 1RM (e1RM) ---
             const e1rmData = exercises.map(ex => {
                 const state = completionState[ex.id] || { weight: 0, reps: 0 };
-                // Calculate e1RM using the captured weight and reps
                 return calculateE1RM(state.weight || 0, state.reps || 0);
             });
             
@@ -452,8 +652,6 @@
                 const sets = parseInt(ex.sets);
                 const weight = state.weight || 0;
                 const reps = state.reps || 0;
-                
-                // Volume = Sets * Reps * Weight
                 return sets * reps * weight;
             });
             
@@ -465,7 +663,7 @@
             exercises.forEach(ex => {
                 const sets = parseInt(ex.sets);
                 const state = completionState[ex.id] || { reps: 0 };
-                totalTargetReps += sets * (ex.targetRep || 10); // Use 10 as safe default
+                totalTargetReps += sets * (ex.targetRep || 10); 
                 totalActualReps += sets * (state.reps || 0);
             });
 
@@ -475,19 +673,24 @@
             }
             
             let feedback = '';
-            if (rqi > 105) {
+            let feedbackColor = '';
+            if (totalActualReps === 0) {
+                 feedback = 'Enter Reps and Weights above to calculate RQI.';
+                 feedbackColor = 'text-blue-600';
+            } else if (rqi > 105) {
                 feedback = 'Excellent Volume! Consider increasing weight next time. 💪';
+                feedbackColor = 'text-green-600';
             } else if (rqi >= 95) {
                 feedback = 'On Target! Perfect effort and execution. 🎯';
-            } else if (rqi > 0) {
-                feedback = 'Keep Pushing! Reps fell short of the goal. May need to lighten the load next time.';
+                feedbackColor = 'text-green-600';
             } else {
-                feedback = 'Enter Reps and Weights above to calculate RQI.';
+                feedback = 'Keep Pushing! Reps fell short of the goal. May need to lighten the load next time.';
+                feedbackColor = 'text-red-600';
             }
 
             document.getElementById('rqi-score').innerText = `${rqi}%`;
             document.getElementById('rqi-feedback').innerText = feedback;
-            document.getElementById('rqi-feedback').className = `ml-4 text-lg font-medium ${rqi > 90 ? 'text-green-600' : 'text-red-600'}`;
+            document.getElementById('rqi-feedback').className = `ml-4 text-lg font-medium ${feedbackColor}`;
 
 
             // Destroy existing charts if they exist
@@ -504,7 +707,7 @@
                         {
                             label: 'Estimated 1RM (LBS)',
                             data: e1rmData,
-                            backgroundColor: '#1e40af', // Deep Blue
+                            backgroundColor: chartPrimaryColor, 
                             borderRadius: 8,
                             barPercentage: 0.7
                         }
@@ -516,13 +719,13 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            title: { display: true, text: 'Strength (LBS)', color: '#1e40af' },
+                            title: { display: true, text: 'Strength (LBS)', color: chartPrimaryColor },
                             grid: { color: '#f5f5f4' },
-                            ticks: { color: '#1e40af' }
+                            ticks: { color: chartPrimaryColor }
                         },
                         x: { 
                             grid: { display: false }, 
-                            ticks: { font: { size: 10 }, color: '#1e40af' } 
+                            ticks: { font: { size: 10 }, color: chartPrimaryColor } 
                         }
                     },
                     plugins: {
@@ -543,7 +746,7 @@
                         {
                             label: 'Total Tonnage (Sets * Reps * Weight)',
                             data: volumeData,
-                            backgroundColor: '#f97316', // Burnt Orange
+                            backgroundColor: chartSecondaryColor, 
                             borderRadius: 8,
                             barPercentage: 0.7
                         }
@@ -555,13 +758,13 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            title: { display: true, text: 'Tonnage (LBS)', color: '#1e40af' },
+                            title: { display: true, text: 'Tonnage (LBS)', color: chartPrimaryColor },
                             grid: { color: '#f5f5f4' },
-                            ticks: { color: '#1e40af' }
+                            ticks: { color: chartPrimaryColor }
                         },
                         x: { 
                             grid: { display: false }, 
-                            ticks: { font: { size: 10 }, color: '#1e40af' } 
+                            ticks: { font: { size: 10 }, color: chartPrimaryColor } 
                         }
                     },
                     plugins: {
